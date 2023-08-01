@@ -1,4 +1,4 @@
-module github.com/cronnoss/hw01_hello_otus
+module github.com/cronnoss/hw-test/hw01_hello_otus
 
 go 1.20
 
