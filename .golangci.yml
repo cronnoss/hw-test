@@ -17,6 +17,7 @@ issues:
         - dupl
         - gocyclo
         - gosec
+        - depguard
 
 linters:
   disable-all: true
