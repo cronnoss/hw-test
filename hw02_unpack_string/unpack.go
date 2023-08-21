@@ -2,41 +2,35 @@ package hw02unpackstring
 
 import (
 	"errors"
+	"unicode"
 )
 
 var ErrInvalidString = errors.New("invalid string")
 
-var isDigit = func(c byte) bool {
-	return c >= '0' && c <= '9'
-}
-
 func Unpack(s string) (string, error) {
-	var result string
-	for i := 0; i < len(s); i++ {
-		if isDigit(s[i]) {
-			err := handleDigit(&result, s, i)
-			if err != nil {
-				return "", err
-			}
-		} else {
-			result += string(s[i])
-		}
-	}
-	return result, nil
-}
+	runeArray := []rune(s)
 
-func handleDigit(result *string, s string, i int) error {
-	if i == 0 {
-		return ErrInvalidString
+	newRuneArray := []rune{}
+	if (len(runeArray) > 0) && (unicode.IsDigit(runeArray[0])) {
+		return "", ErrInvalidString
 	}
-	if s[i] == '0' {
-		if s[i-1] == '1' {
-			return ErrInvalidString
+
+	for i := 0; i < len(runeArray); i++ {
+		tempRune := runeArray[i]
+		if (i+1 < len(runeArray)) && (unicode.IsDigit(runeArray[i+1])) {
+			nextRuneIsDigit := i + 1
+			if (i+2 < len(runeArray)) && (unicode.IsDigit(runeArray[i+2])) {
+				return "", ErrInvalidString
+			}
+			differenceBetweenDigitRuneAndZero := int(runeArray[nextRuneIsDigit] - '0')
+			for j := 0; j < differenceBetweenDigitRuneAndZero; j++ {
+				newRuneArray = append(newRuneArray, tempRune)
+			}
+			i++
+		} else {
+			newRuneArray = append(newRuneArray, tempRune)
 		}
-		*result = (*result)[:len(*result)-1]
 	}
-	for j := 0; j < int(s[i]-'0')-1; j++ {
-		*result += string(s[i-1])
-	}
-	return nil
+
+	return string(newRuneArray), nil
 }
