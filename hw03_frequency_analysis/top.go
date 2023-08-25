@@ -10,13 +10,7 @@ type pair struct {
 	freq int
 }
 
-var result []string
-
 func Top10(s string) []string {
-	defer func() {
-		result = nil
-	}()
-
 	// Split the input text into individual words. This assumes that words are separated by spaces.
 	words := strings.Fields(s)
 
@@ -43,12 +37,12 @@ func Top10(s string) []string {
 	})
 
 	// Return the first 10 entries of the sorted slice of pairs.
+	result := make([]string, 0)
 	for _, pair := range pairs {
+		if len(result) >= 10 {
+			break
+		}
 		result = append(result, pair.word)
-	}
-
-	if len(result) > 10 {
-		result = result[:10]
 	}
 
 	return result
