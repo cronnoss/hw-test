@@ -2,6 +2,7 @@ package hw05parallelexecution
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 )
@@ -51,9 +52,22 @@ func Run(tasks []Task, n, m int) error {
 func increment(queue chan Task, errCounter *int32, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for task := range queue {
-		err := task()
-		if err != nil {
+		if task == nil {
 			atomic.AddInt32(errCounter, 1)
+			continue
 		}
+
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					fmt.Println("Recovered from ", r)
+					atomic.AddInt32(errCounter, 1)
+				}
+			}()
+			err := task()
+			if err != nil {
+				atomic.AddInt32(errCounter, 1)
+			}
+		}()
 	}
 }
