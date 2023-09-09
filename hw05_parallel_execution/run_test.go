@@ -67,4 +67,85 @@ func TestRun(t *testing.T) {
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
+
+	t.Run("if M is 0, than return ErrErrorsLimitExceeded", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+
+		for i := 0; i < tasksCount; i++ {
+			tasks = append(tasks, func() error {
+				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+				return nil
+			})
+		}
+
+		workersCount := 10
+		maxErrorsCount := 0
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
+	})
+
+	t.Run("if M less than 0, than return ErrErrorsLimitExceeded", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+
+		for i := 0; i < tasksCount; i++ {
+			tasks = append(tasks, func() error {
+				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+				return nil
+			})
+		}
+
+		workersCount := 10
+		maxErrorsCount := -1
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
+	})
+
+	t.Run("if N > len(tasks), than run len(tasks) workers", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+
+		for i := 0; i < tasksCount; i++ {
+			tasks = append(tasks, func() error {
+				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+				return nil
+			})
+		}
+
+		workersCount := 100
+		maxErrorsCount := 10
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("Empty tasks", func(t *testing.T) {
+		tasks := make([]Task, 0)
+		workersCount := 10
+		maxErrorsCount := 10
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("Not valid number of workers", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+
+		for i := 0; i < tasksCount; i++ {
+			tasks = append(tasks, func() error {
+				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+				return nil
+			})
+		}
+
+		workersCount := -1
+		maxErrorsCount := 10
+		err := Run(tasks, workersCount, maxErrorsCount)
+
+		require.Equal(t, ErrInvalidWorkersCount, err)
+	})
 }
