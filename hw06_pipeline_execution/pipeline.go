@@ -10,7 +10,9 @@ type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	for _, stage := range stages {
-		in = stage(workStage(done, in))
+		if stage != nil {
+			in = stage(workStage(done, in))
+		}
 	}
 	return in
 }
