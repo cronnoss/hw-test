@@ -29,7 +29,11 @@ func workStage(done In, in In) Out {
 				if !ok {
 					return
 				}
-				out <- v
+				select {
+				case out <- v:
+				case <-done:
+					return
+				}
 			}
 		}
 	}()
