@@ -1,5 +1,7 @@
 package hw06pipelineexecution
 
+import "time"
+
 type (
 	In  = <-chan interface{}
 	Out = In
@@ -29,11 +31,15 @@ func workStage(done In, in In) Out {
 				if !ok {
 					return
 				}
-				select {
-				case out <- v:
-				case <-done:
-					return
+				if v != nil {
+					select {
+					case out <- v:
+					case <-done:
+						return
+					}
 				}
+			default:
+				time.Sleep(time.Microsecond)
 			}
 		}
 	}()
