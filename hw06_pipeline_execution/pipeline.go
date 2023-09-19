@@ -1,7 +1,5 @@
 package hw06pipelineexecution
 
-import "time"
-
 type (
 	In  = <-chan interface{}
 	Out = In
@@ -21,8 +19,14 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 
 func workStage(done In, in In) Out {
 	out := make(Bi)
+
 	go func() {
-		defer close(out)
+		defer func() {
+			close(out)
+			for range in {
+			}
+		}()
+
 		for {
 			select {
 			case <-done:
@@ -31,15 +35,11 @@ func workStage(done In, in In) Out {
 				if !ok {
 					return
 				}
-				if v != nil {
-					select {
-					case out <- v:
-					case <-done:
-						return
-					}
+				select {
+				case out <- v:
+				case <-done:
+					return
 				}
-			default:
-				time.Sleep(time.Microsecond)
 			}
 		}
 	}()
