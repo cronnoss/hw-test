@@ -18,6 +18,9 @@ issues:
         - gocyclo
         - gosec
         - depguard
+    - path: \.go
+      linters:
+        - revive
 
 linters:
   disable-all: true
