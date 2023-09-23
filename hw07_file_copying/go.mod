@@ -1,6 +1,6 @@
 module github.com/cronnoss/hw-test/hw07_file_copying
 
-go 1.21.1
+go 1.21
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.4
