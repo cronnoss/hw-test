@@ -13,7 +13,16 @@ var (
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 )
 
-const bufferSize = 1024
+type barWriter struct {
+	w io.Writer
+	b *pb.ProgressBar
+}
+
+func (bw *barWriter) Write(p []byte) (n int, err error) {
+	n, err = bw.w.Write(p)
+	bw.b.Add(n)
+	return
+}
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	inFile, err := os.Open(fromPath)
@@ -37,6 +46,11 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrOffsetExceedsFileSize
 	}
 
+	_, err = inFile.Seek(offset, 0)
+	if err != nil {
+		return ErrUnsupportedFile
+	}
+
 	outFile, err := os.Create(toPath)
 	if err != nil {
 		return err
@@ -49,29 +63,13 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		limit = fileSize - offset
 	}
 
-	bar := pb.StartNew(int(limit))
-	buf := make([]byte, bufferSize)
+	bar := pb.Full.Start64(limit)
+	defer bar.Finish()
 
-	for limit > 0 {
-		readBytes, err := inFile.ReadAt(buf, offset)
-		if err != nil && !errors.Is(err, io.EOF) {
-			return err
-		}
-
-		writeBytes := readBytes
-		if int64(writeBytes) > limit {
-			writeBytes = int(limit)
-		}
-		_, err = outFile.Write(buf[:writeBytes])
-		if err != nil {
-			return err
-		}
-
-		limit -= int64(readBytes)
-		offset += int64(bufferSize)
-		bar.Add(writeBytes)
+	_, err = io.CopyN(&barWriter{outFile, bar}, inFile, limit)
+	if err != nil {
+		return err
 	}
 
-	bar.Finish()
 	return outFile.Chmod(fileInfo.Mode().Perm())
 }
