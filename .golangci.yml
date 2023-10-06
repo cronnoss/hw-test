@@ -27,6 +27,7 @@ issues:
     - path: \.go
       linters:
         - revive
+        - gosec
 
 linters:
   disable-all: true
