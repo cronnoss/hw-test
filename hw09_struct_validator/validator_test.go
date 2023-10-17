@@ -34,6 +34,9 @@ type (
 		Code int    `validate:"in:200,404,500"`
 		Body string `json:"omitempty"`
 	}
+	ResponseArray struct {
+		Code []int `validate:"in:200,404,500"`
+	}
 )
 
 func TestValidate(t *testing.T) {
@@ -56,78 +59,37 @@ func TestValidate(t *testing.T) {
 			in: User{
 				ID:     "abcdefghijklmnopqrstuvwxyz012345",
 				Name:   "Test User",
-				Age:    25,
-				Email:  "testuser@gmail.com",
-				Role:   "admin",
-				Phones: []string{"12345678901", "10987654321"},
-			},
-			expectedErr: ValidationErrors{{Field: "ID", Err: fmt.Errorf("expected length of 36, got 32")}},
-		},
-		{
-			in: User{
-				ID:     "abcdefghijklmnopqrstuvwxyz0123456789",
-				Name:   "Long name_Long name_Long name_Long name_Long name_Long name_Long name_Long name_Long name_",
-				Age:    25,
-				Email:  "testuser@gmail.com",
-				Role:   "admin",
-				Phones: []string{"12345678901", "10987654321"},
-			},
-			expectedErr: nil,
-		},
-		{
-			in: User{
-				ID:     "abcdefghijklmnopqrstuvwxyz0123456789",
-				Name:   "Test User",
 				Age:    70,
-				Email:  "testuser@gmail.com",
-				Role:   "admin",
-				Phones: []string{"12345678901", "10987654321"},
-			},
-			expectedErr: ValidationErrors{{Field: "Age", Err: fmt.Errorf("number is more than maximum of 50")}},
-		},
-		{
-			in: User{
-				ID:     "abcdefghijklmnopqrstuvwxyz0123456789",
-				Name:   "Test User",
-				Age:    25,
 				Email:  "_test@user",
-				Role:   "admin",
-				Phones: []string{"12345678901", "10987654321"},
-			},
-			expectedErr: ValidationErrors{{Field: "Email", Err: fmt.Errorf("string does not match regexp ^\\w+@\\w+\\.\\w+$")}},
-		},
-		{
-			in: User{
-				ID:     "abcdefghijklmnopqrstuvwxyz0123456789",
-				Name:   "Test User",
-				Age:    25,
-				Email:  "testuser@gmail.com",
 				Role:   "some_role",
-				Phones: []string{"12345678901", "10987654321"},
+				Phones: []string{"212", "495"},
 			},
-			expectedErr: ValidationErrors{{Field: "Role", Err: fmt.Errorf("string some_role is not in set [admin stuff]")}},
-		},
-		{
-			in: User{
-				ID:     "abcdefghijklmnopqrstuvwxyz0123456789",
-				Name:   "Test User",
-				Age:    25,
-				Email:  "testuser@gmail.com",
-				Role:   "admin",
-				Phones: []string{"12345678901", "4"},
-			},
-			expectedErr: ValidationErrors{{Field: "Phones", Err: fmt.Errorf("expected length of 11, got 1")}},
-		},
-		{
-			in: User{
-				ID:     "abcdefghijklmnopqrstuvwxyz0123456789",
-				Name:   "Test User",
-				Age:    25,
-				Email:  "testuser@gmail.com",
-				Role:   "admin",
-				Phones: []string{"+12345678901"},
-			},
-			expectedErr: ValidationErrors{{Field: "Phones", Err: fmt.Errorf("expected length of 11, got 12")}},
+			expectedErr: NewValidationErrors(
+				ValidationError{
+					Field: "ID",
+					Err:   fmt.Errorf("len must be 36, got 32 for 'abcdefghijklmnopqrstuvwxyz012345'"),
+				},
+				ValidationError{
+					Field: "Age",
+					Err:   fmt.Errorf("maximum value 50, got 70"),
+				},
+				ValidationError{
+					Field: "Email",
+					Err:   fmt.Errorf("fieldValue must match regexp '^\\w+@\\w+\\.\\w+$', actual value '_test@user'"),
+				},
+				ValidationError{
+					Field: "Role",
+					Err:   fmt.Errorf("fieldValue must be one of [admin stuff] values, given 'some_role'"),
+				},
+				ValidationError{
+					Field: "Phones",
+					Err:   fmt.Errorf("len must be 11, got 3 for '212'"),
+				},
+				ValidationError{
+					Field: "Phones",
+					Err:   fmt.Errorf("len must be 11, got 3 for '495'"),
+				},
+			),
 		},
 		{
 			in: App{
@@ -155,7 +117,37 @@ func TestValidate(t *testing.T) {
 				Code: 400,
 				Body: "Bad Request",
 			},
-			expectedErr: ValidationErrors{{Field: "Code", Err: fmt.Errorf("number 400 is not in set [200 404 500]")}},
+			expectedErr: ValidationErrors{{Field: "Code", Err: fmt.Errorf(
+				"fieldValue must be one of [200 404 500] values, given 400")}},
+		},
+		{
+			in: ResponseArray{
+				Code: []int{200, 404, 500},
+			},
+			expectedErr: nil,
+		},
+		{
+			in: ResponseArray{
+				Code: []int{200, 201, 404, 420},
+			},
+			expectedErr: NewValidationErrors(
+				ValidationError{
+					Field: "Code",
+					Err:   fmt.Errorf("fieldValue must be one of [200 404 500] values, given 201"),
+				},
+				ValidationError{
+					Field: "Code",
+					Err:   fmt.Errorf("fieldValue must be one of [200 404 500] values, given 420"),
+				},
+			),
+		},
+		{
+			in:          "1",
+			expectedErr: NewIllegalArgumentError("expected a struct"),
+		},
+		{
+			in:          struct{}{},
+			expectedErr: nil,
 		},
 	}
 
