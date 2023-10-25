@@ -19,8 +19,14 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	stat := make(DomainStat)
 	var user User
 	for scanner.Scan() {
+		if !strings.Contains(scanner.Text(), "@") {
+			continue
+		}
 		if err := user.UnmarshalJSON(scanner.Bytes()); err != nil {
 			return nil, fmt.Errorf("error unmarshalling user: %w", err)
+		}
+		if !strings.Contains(user.Email, "@") {
+			continue
 		}
 		if strings.HasSuffix(user.Email, domain) {
 			stat[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]++
