@@ -14,6 +14,15 @@ linters-settings:
         allow:
           - $gostd
           - github.com/cheggaaa/pb/v3
+          - github.com/BurntSushi/toml
+          - github.com/jackc/pgx/stdlib
+          - github.com/jmoiron/sqlx
+          - github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/app
+          - github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/logger
+          - github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/server/http
+          - github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/storage/memory
+          - github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/storage/sql
+          - github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/storage
 
 issues:
   exclude-rules:

@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/storage"
 )
 
 var (
+	ErrID             = errors.New("wrong ID")
 	ErrUserID         = errors.New("wrong UserID")
 	ErrTitle          = errors.New("wrong Title")
 	ErrDescription    = errors.New("wrong Description")
@@ -48,7 +50,10 @@ func New(logger Logger, storage Storage) *App {
 	return &App{log: logger, storage: storage}
 }
 
-func CheckingEvent(e *storage.Event) error {
+func CheckingEvent(e *storage.Event, checkID bool) error {
+	if checkID && e.ID == 0 {
+		return fmt.Errorf("%w(ID is zero)", ErrID)
+	}
 	if e.UserID == 0 {
 		return fmt.Errorf("%w(UserID is %v)", ErrUserID, e.UserID)
 	}
@@ -82,15 +87,55 @@ func CheckingEvent(e *storage.Event) error {
 	return nil
 }
 
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+func (a *App) InsertEvent(ctx context.Context, event *storage.Event) error {
+	if err := CheckingEvent(event, false); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return a.storage.InsertEvent(ctx, event)
 }
 
-func (m *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (a *App) UpdateEvent(ctx context.Context, event *storage.Event) error {
+	if err := CheckingEvent(event, true); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return a.storage.UpdateEvent(ctx, event)
+}
+
+func (a *App) DeleteEvent(ctx context.Context, event *storage.Event) error {
+	if err := CheckingEvent(event, true); err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return a.storage.DeleteEvent(ctx, event)
+}
+
+func (a *App) GetEventByID(ctx context.Context, id int64) (storage.Event, error) {
+	if id == 0 {
+		return storage.Event{}, ErrID
+	}
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return a.storage.GetEventByID(ctx, id)
+}
+
+func (a *App) GetAll(ctx context.Context, userID int64) ([]storage.Event, error) {
+	if userID == 0 {
+		return []storage.Event{}, ErrUserID
+	}
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return a.storage.GetAll(ctx, userID)
+}
+
+func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("hello-world"))
 }
-
-// TODO

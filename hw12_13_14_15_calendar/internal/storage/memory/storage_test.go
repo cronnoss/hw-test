@@ -201,7 +201,7 @@ func TestCheckingEvent(t *testing.T) {
 		NotifyTime:  time.Now().AddDate(0, 0, 1),
 		Description: "test",
 	}
-	err := app.CheckingEvent(e)
+	err := app.CheckingEvent(e, false)
 	require.Equal(t, nil, err)
 }
 

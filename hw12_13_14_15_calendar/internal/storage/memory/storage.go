@@ -35,7 +35,7 @@ func (s *Storage) Close(ctx context.Context) error {
 }
 
 func (s *Storage) InsertEvent(ctx context.Context, e *storage.Event) error {
-	if err := app.CheckingEvent(e); err != nil {
+	if err := app.CheckingEvent(e, false); err != nil {
 		return err
 	}
 	s.mu.Lock()
@@ -46,7 +46,7 @@ func (s *Storage) InsertEvent(ctx context.Context, e *storage.Event) error {
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, e *storage.Event) error {
-	if err := app.CheckingEvent(e); err != nil {
+	if err := app.CheckingEvent(e, true); err != nil {
 		return err
 	}
 	s.mu.Lock()

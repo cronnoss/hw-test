@@ -21,7 +21,7 @@ func NewMiddlewareLogger() *MiddlewareLogger {
 	return &MiddlewareLogger{}
 }
 
-func (m *MiddlewareLogger) loggingMiddleware(next http.Handler) http.Handler {
+func (a *MiddlewareLogger) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sw := &statusWriter{ResponseWriter: w}
 
