@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -12,11 +13,13 @@ import (
 
 func main() {
 	timeout := flag.Duration("timeout", 10*time.Second, "connection timeout")
-	host := flag.String("host", "localhost", "remote host")
-	port := flag.String("port", "4242", "remote port")
 	flag.Parse()
+	if flag.NArg() != 2 {
+		fmt.Println("use: go-telnet [parameters] host port")
+		return
+	}
 
-	address := net.JoinHostPort(*host, *port)
+	address := net.JoinHostPort(flag.Arg(0), flag.Arg(1))
 	client := NewTelnetClient(address, *timeout, os.Stdin, os.Stdout)
 
 	if err := client.Connect(); err != nil {
