@@ -95,12 +95,12 @@ func TestDeleteEvent(t *testing.T) {
 		Description: "test",
 	}
 	_ = s.InsertEvent(context.Background(), e)
-	err := s.DeleteEvent(context.Background(), e)
+	err := s.DeleteEvent(context.Background(), e.ID)
 	if err != nil {
 		t.Errorf("DeleteEvent() error = %v, wantErr nil", err)
 	}
 	e2, err := s.GetEventByID(context.Background(), 1)
-	require.NoError(t, err)
+	require.ErrorIs(t, err, app.ErrEventNotFound)
 	require.Equal(t, int64(0), e2.ID)
 }
 
@@ -116,7 +116,7 @@ func TestGetEventById(t *testing.T) {
 		Description: "test",
 	}
 	_ = s.InsertEvent(context.Background(), e)
-	_, err := s.GetEventByID(context.Background(), 1)
+	_, err := s.GetEventByID(context.Background(), e.ID)
 	if err != nil {
 		t.Errorf("GetEventByID() error = %v, wantErr nil", err)
 	}
@@ -144,13 +144,13 @@ func TestGetAll(t *testing.T) {
 	}
 	_ = s.InsertEvent(context.Background(), e)
 	_ = s.InsertEvent(context.Background(), e2)
-	events, err := s.GetAll(context.Background(), 1)
+	events, err := s.GetAllEvents(context.Background(), 1)
 	if err != nil {
-		t.Errorf("GetAll() error = %v, wantErr nil", err)
+		t.Errorf("GetAllEvents() error = %v, wantErr nil", err)
 	}
-	require.Equal(t, 2, len(events), "GetAll() did not return all the events")
+	require.Equal(t, 2, len(events), "GetAllEvents() did not return all the events")
 	for _, event := range events {
-		require.True(t, event.ID == e.ID || event.ID == e2.ID, "GetAll() returned an unknown event")
+		require.True(t, event.ID == e.ID || event.ID == e2.ID, "GetAllEvents() returned an unknown event")
 	}
 }
 
@@ -311,7 +311,7 @@ func TestConcurrency_Insert(t *testing.T) {
 	}
 	wg.Wait()
 
-	events, err := s.GetAll(context.Background(), event.UserID)
+	events, err := s.GetAllEvents(context.Background(), event.UserID)
 	require.NoError(t, err)
 	require.Equal(t, 100, len(events), "Inserts are not concurrently safe")
 }
@@ -344,7 +344,7 @@ func TestConcurrency_Update(t *testing.T) {
 	}
 	wg.Wait()
 
-	events, err := s.GetAll(context.Background(), event.UserID)
+	events, err := s.GetAllEvents(context.Background(), event.UserID)
 	require.NoError(t, err)
 	for _, ev := range events {
 		require.Contains(t, ev.Title, "title_", "Updates are not concurrently safe")

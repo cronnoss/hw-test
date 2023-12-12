@@ -1,7 +1,54 @@
 syntax = "proto3";
 
-package event;
+package event_service_v1;
+
+option go_package = "./;event_service_v1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service EventServiceV1 {
+    rpc InsertEvent (ReqByEvent) returns (RepID) {};
+    rpc UpdateEvent (ReqByEvent) returns (google.protobuf.Empty) {};
+    rpc DeleteEvent (ReqByID) returns (google.protobuf.Empty){};
+    rpc GetEventByID (ReqByID) returns (RepEvents){};
+    rpc GetAllEvents (ReqByUser) returns (RepEvents){};
+    rpc GetAllEventsDay (ReqByUserByDate) returns (RepEvents){};
+    rpc GetAllEventsWeek (ReqByUserByDate) returns (RepEvents){};
+    rpc GetAllEventsMonth (ReqByUserByDate) returns (RepEvents){};
+}
 
 message Event {
-    // TODO
+    optional int64   ID              = 1;
+    optional int64   UserID          = 2;
+    optional string  Title           = 3;
+    optional string  Description     = 4;
+    optional google.protobuf.Timestamp  OnTime          = 5;
+    optional google.protobuf.Timestamp  OffTime         = 6;
+    optional google.protobuf.Timestamp  NotifyTime      = 7;
+}
+
+message ReqByEvent {
+    optional Event  event = 1;
+}
+
+message ReqByID {
+    optional int64   ID = 1;
+}
+
+message ReqByUser {
+    optional int64   UserID = 1;
+}
+
+message ReqByUserByDate {
+    optional int64                      UserID = 1;
+    optional google.protobuf.Timestamp  Date         = 2;
+}
+
+message RepID {
+    optional int64    ID = 1;
+}
+
+message RepEvents {
+    repeated Event  event = 2;
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	internalgrpc "github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/server/http"
 )
 
@@ -14,6 +15,7 @@ import (
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
 	HTTPServer internalhttp.Conf `toml:"http"`
+	GRPSServer internalgrpc.Conf `toml:"grpc"`
 	Storage    StorageConf       `toml:"storage"`
 	Logger     LoggerConf        `toml:"logger"`
 }
@@ -27,7 +29,7 @@ type StorageConf struct {
 	DSN string `toml:"dsn"`
 }
 
-type HTTPServerConf struct {
+type GRPSServer struct {
 	Host string `toml:"host"`
 	Port string `toml:"port"`
 }

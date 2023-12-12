@@ -25,7 +25,7 @@ var (
 
 type App struct {
 	log     Logger
-	storage Storage
+	storage storage.Storage
 }
 
 type Logger interface {
@@ -36,17 +36,7 @@ type Logger interface {
 	Debugf(format string, a ...interface{})
 }
 
-type Storage interface {
-	Connect(context.Context) error
-	Close(context.Context) error
-	InsertEvent(context.Context, *storage.Event) error
-	UpdateEvent(context.Context, *storage.Event) error
-	DeleteEvent(context.Context, *storage.Event) error
-	GetEventByID(ctx context.Context, eID int64) (storage.Event, error)
-	GetAll(ctx context.Context, userID int64) ([]storage.Event, error)
-}
-
-func New(logger Logger, storage Storage) *App {
+func New(logger Logger, storage storage.Storage) *App {
 	return &App{log: logger, storage: storage}
 }
 
@@ -66,13 +56,13 @@ func CheckingEvent(e *storage.Event, checkID bool) error {
 		return fmt.Errorf("%w(empty OnTime)", ErrOnTime)
 	}
 
-	if !e.OffTime.IsZero() {
-		if e.OffTime.Before(e.OnTime) {
-			return fmt.Errorf("%w(OffTime before OnTime)", ErrOffTime)
-		}
-		if e.OffTime.Equal(e.OnTime) {
-			return fmt.Errorf("%w(OffTime equal OnTime)", ErrOffTime)
-		}
+	switch {
+	case e.OffTime.IsZero():
+		return fmt.Errorf("%w: empty", ErrOffTime)
+	case e.OffTime.Before(e.OnTime):
+		return fmt.Errorf("%w: before OnTime", ErrOffTime)
+	case e.OffTime.Equal(e.OnTime):
+		return fmt.Errorf("%w: equal OnTime", ErrOffTime)
 	}
 
 	if !e.NotifyTime.IsZero() {
@@ -107,14 +97,10 @@ func (a *App) UpdateEvent(ctx context.Context, event *storage.Event) error {
 	return a.storage.UpdateEvent(ctx, event)
 }
 
-func (a *App) DeleteEvent(ctx context.Context, event *storage.Event) error {
-	if err := CheckingEvent(event, true); err != nil {
-		return err
-	}
-
+func (a *App) DeleteEvent(ctx context.Context, id int64) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	return a.storage.DeleteEvent(ctx, event)
+	return a.storage.DeleteEvent(ctx, id)
 }
 
 func (a *App) GetEventByID(ctx context.Context, id int64) (storage.Event, error) {
@@ -126,13 +112,40 @@ func (a *App) GetEventByID(ctx context.Context, id int64) (storage.Event, error)
 	return a.storage.GetEventByID(ctx, id)
 }
 
-func (a *App) GetAll(ctx context.Context, userID int64) ([]storage.Event, error) {
+func (a *App) GetAllEvents(ctx context.Context, userID int64) ([]storage.Event, error) {
 	if userID == 0 {
 		return []storage.Event{}, ErrUserID
 	}
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	return a.storage.GetAll(ctx, userID)
+	return a.storage.GetAllEvents(ctx, userID)
+}
+
+func (a *App) GetAllEventsDay(ctx context.Context, userID int64, date time.Time) ([]storage.Event, error) {
+	if userID == 0 {
+		return []storage.Event{}, ErrUserID
+	}
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return a.storage.GetAllRange(ctx, userID, date, date.AddDate(0, 0, 1))
+}
+
+func (a *App) GetAllEventsWeek(ctx context.Context, userID int64, date time.Time) ([]storage.Event, error) {
+	if userID == 0 {
+		return []storage.Event{}, ErrUserID
+	}
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return a.storage.GetAllRange(ctx, userID, date, date.AddDate(0, 0, 7))
+}
+
+func (a *App) GetAllEventsMonth(ctx context.Context, userID int64, date time.Time) ([]storage.Event, error) {
+	if userID == 0 {
+		return []storage.Event{}, ErrUserID
+	}
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	return a.storage.GetAllRange(ctx, userID, date, date.AddDate(0, 1, 0))
 }
 
 func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
