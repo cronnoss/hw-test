@@ -31,6 +31,16 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
+install-grpc-deps:
+	go get -u google.golang.org/protobuf/cmd/protoc-gen-go
+	go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+generate: install-grpc-deps
+	mkdir -p pkg/event_service_v1
+	protoc 	--proto_path=api --go_out=pkg/event_service_v1 --go_opt=paths=source_relative \
+			--go-grpc_out=pkg/event_service_v1  --go-grpc_opt=paths=source_relative \
+			EventService.proto
+
 run_postgres:
 	docker run -d --rm --name pg -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secretkey -e PGDATA=/var/lib/postgresql/data/pgdata -v psqldata:/var/lib/postgresql/data -p 5432:5432 postgres:14
 
