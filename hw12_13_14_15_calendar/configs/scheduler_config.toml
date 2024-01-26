@@ -1,18 +1,11 @@
+#scheduler
+period = "10s"
+url_rmq = "amqp://root:secretkey@localhost:5672/"
+
 [logger]
 level = "DEBUG"
-
-[http]
-host = "localhost"
-port = "8090"
-
-[grpc]
-host = "localhost"
-port = "50000"
 
 [storage]
 #db = "in_memory"
 db = "sql"
 dsn = "postgresql://root:secretkey@localhost:5432/calendar?sslmode=disable"
-
-# TODO
-# ...

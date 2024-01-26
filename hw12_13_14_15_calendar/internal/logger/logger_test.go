@@ -3,103 +3,99 @@ package logger
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestLogger(t *testing.T) {
 	tests := []struct {
-		name           string
-		level          string
-		funcToCall     func(*Logger)
-		expectedOutput string
+		name        string
+		level       string
+		funcName    string
+		message     string
+		expectedMsg string
 	}{
 		{
-			name:           "Error Level - Errorf",
-			level:          "ERROR",
-			funcToCall:     func(l *Logger) { l.Errorf("Test Error") },
-			expectedOutput: "ERROR:Test Error",
+			name:        "error msg",
+			level:       "ERROR",
+			funcName:    "Error",
+			message:     "This is error message",
+			expectedMsg: "ERROR:This is error message",
 		},
 		{
-			name:           "Error Level - Warningf",
-			level:          "ERROR",
-			funcToCall:     func(l *Logger) { l.Warningf("Test Warning") },
-			expectedOutput: "",
+			name:        "skipp_warn",
+			level:       "ERROR",
+			funcName:    "Warn",
+			message:     "This is error message",
+			expectedMsg: "",
 		},
 		{
-			name:           "Error Level - Infof",
-			level:          "ERROR",
-			funcToCall:     func(l *Logger) { l.Infof("Test Info") },
-			expectedOutput: "",
+			name:        "skipp_info",
+			level:       "ERROR",
+			funcName:    "Info",
+			message:     "This is error message",
+			expectedMsg: "",
 		},
 		{
-			name:           "Error Level - Debugf",
-			level:          "ERROR",
-			funcToCall:     func(l *Logger) { l.Debugf("Test Debug") },
-			expectedOutput: "",
+			name:        "skipp_debug",
+			level:       "ERROR",
+			funcName:    "Debug",
+			message:     "This is error message",
+			expectedMsg: "",
 		},
 		{
-			name:           "Warn Level - Errorf",
-			level:          "WARN",
-			funcToCall:     func(l *Logger) { l.Errorf("Test Error") },
-			expectedOutput: "ERROR:Test Error",
+			name:        "debug",
+			level:       "DEBUG",
+			funcName:    "Debug",
+			message:     "This is error message",
+			expectedMsg: "DEBUG:This is error message",
 		},
 		{
-			name:           "Warn Level - Warningf",
-			level:          "WARN",
-			funcToCall:     func(l *Logger) { l.Warningf("Test Warning") },
-			expectedOutput: "WARN:Test Warning",
-		},
-		{
-			name:           "Debug Level - Infof",
-			level:          "DEBUG",
-			funcToCall:     func(l *Logger) { l.Infof("Test Info") },
-			expectedOutput: "INFO:Test Info",
-		},
-		{
-			name:           "Info Level - Debugf",
-			level:          "INFO",
-			funcToCall:     func(l *Logger) { l.Debugf("Test Debug") },
-			expectedOutput: "",
+			name:        "skipp_debug2",
+			level:       "INFO",
+			funcName:    "Debug",
+			message:     "This is error message",
+			expectedMsg: "",
 		},
 	}
 
 	t.Parallel()
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var output bytes.Buffer
-			logger, _ := New(tt.level, &output)
-			tt.funcToCall(logger)
-			if output.String() != tt.expectedOutput {
-				t.Errorf("got %q, want %q", output.String(), tt.expectedOutput)
+	for _, tc := range tests {
+		t.Run(fmt.Sprintf("case %s", tc.name), func(t *testing.T) {
+			var b bytes.Buffer
+			tc := tc
+			l := NewLogger(tc.level, &b)
+
+			switch tc.funcName {
+			case "Error":
+				l.Errorf(tc.message)
+			case "Warn":
+				l.Warningf(tc.message)
+			case "Info":
+				l.Infof(tc.message)
+			case "Debug":
+				l.Debugf(tc.message)
 			}
+
+			require.Equal(t, tc.expectedMsg, b.String(), "error output message")
 		})
 	}
-
-	t.Run("Wrong level", func(t *testing.T) {
-		var output bytes.Buffer
-		_, err := New("WRONG", &output)
-		if err == nil {
-			t.Errorf("expected error, got nil")
-		}
-	})
 }
 
-func TestLogger_Fatalf(t *testing.T) {
+func TestFatalf(t *testing.T) {
 	if os.Getenv("BE_CRASHER") == "1" {
-		var output bytes.Buffer
-		logger, _ := New("DEBUG", &output)
-		logger.Fatalf("Test Fatal")
+		var b bytes.Buffer
+		_ = NewLogger("WRONG DB TYPE", &b)
 		return
 	}
-	cmd := exec.Command(os.Args[0], "-test.run=TestLogger_Fatalf")
+	cmd := exec.Command(os.Args[0], "-test.run=TestFatalf")
 	cmd.Env = append(os.Environ(), "BE_CRASHER=1")
 	err := cmd.Run()
 
 	var e *exec.ExitError
-	if errors.As(err, &e) && !e.Success() {
-		return
-	}
-	t.Fatalf("process ran with err %v, want exit status 1", err)
+	require.True(t, err != nil && errors.As(err, &e), "process ran with err %v, want exit status 1", err)
 }

@@ -28,7 +28,7 @@
 Каждый из сервисов должен принимать путь файлу конфигурации:
 ```bash
 ./calendar           --config=/path/to/calendar_config.yaml
-./calendar_scheduler --config=/path/to/scheduler_config.yaml
+./scheduler --config=/path/to/scheduler_config.yaml
 ./calendar_sender    --config=/path/to/sender_config.yaml
 ```
 

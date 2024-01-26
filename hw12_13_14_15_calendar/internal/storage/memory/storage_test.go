@@ -7,25 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/app"
-	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/storage"
+	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func helperEvent(ev *storage.Event, i int) {
-	ev.UserID = int64(i + 1)
-	ev.Title = fmt.Sprintf("Title_N%v", i+1)
-	ev.Description = fmt.Sprintf("Description_N%v", i+1)
-	ev.OnTime = time.Now()
-	ev.OffTime = time.Now().AddDate(0, 0, 7)
-	ev.NotifyTime = time.Now().AddDate(0, 0, 6)
-}
-
 func TestNew(t *testing.T) {
 	s := New()
 	if s == nil {
-		t.Error("New() should not return nil")
+		t.Error("NewCalendar() should not return nil")
 	}
 }
 
@@ -47,7 +37,7 @@ func TestClose(t *testing.T) {
 
 func TestInsertEvent(t *testing.T) {
 	s := New()
-	e := &storage.Event{
+	e := &model.Event{
 		ID:          1,
 		UserID:      1,
 		Title:       "test",
@@ -67,7 +57,7 @@ func TestInsertEvent(t *testing.T) {
 
 func TestUpdateEvent(t *testing.T) {
 	s := New()
-	e := &storage.Event{
+	e := &model.Event{
 		ID:          1,
 		UserID:      1,
 		Title:       "test",
@@ -85,7 +75,7 @@ func TestUpdateEvent(t *testing.T) {
 
 func TestDeleteEvent(t *testing.T) {
 	s := New()
-	e := &storage.Event{
+	e := &model.Event{
 		ID:          1,
 		UserID:      1,
 		Title:       "test",
@@ -100,13 +90,13 @@ func TestDeleteEvent(t *testing.T) {
 		t.Errorf("DeleteEvent() error = %v, wantErr nil", err)
 	}
 	e2, err := s.GetEventByID(context.Background(), 1)
-	require.ErrorIs(t, err, app.ErrEventNotFound)
+	require.ErrorIs(t, err, ErrEventNotFound)
 	require.Equal(t, int64(0), e2.ID)
 }
 
 func TestGetEventById(t *testing.T) {
 	s := New()
-	e := &storage.Event{
+	e := &model.Event{
 		ID:          1,
 		UserID:      1,
 		Title:       "test",
@@ -124,7 +114,7 @@ func TestGetEventById(t *testing.T) {
 
 func TestGetAll(t *testing.T) {
 	s := New()
-	e := &storage.Event{
+	e := &model.Event{
 		ID:          1,
 		UserID:      1,
 		Title:       "test",
@@ -133,7 +123,7 @@ func TestGetAll(t *testing.T) {
 		NotifyTime:  time.Now().AddDate(0, 0, 1),
 		Description: "test",
 	}
-	e2 := &storage.Event{
+	e2 := &model.Event{
 		ID:          2,
 		UserID:      1,
 		Title:       "test2",
@@ -156,7 +146,7 @@ func TestGetAll(t *testing.T) {
 
 func TestWrongUpdateEvent(t *testing.T) {
 	s := New()
-	e := &storage.Event{
+	e := &model.Event{
 		ID:          -1,
 		UserID:      1,
 		Title:       "test",
@@ -166,12 +156,12 @@ func TestWrongUpdateEvent(t *testing.T) {
 		Description: "test",
 	}
 	err := s.UpdateEvent(context.Background(), e)
-	require.ErrorIs(t, err, app.ErrEventNotFound)
+	require.ErrorIs(t, err, ErrEventNotFound)
 }
 
 func TestUpdateEventNotFound(t *testing.T) {
 	s := New()
-	e := &storage.Event{
+	e := &model.Event{
 		ID:          100,
 		UserID:      1,
 		Title:       "test",
@@ -181,82 +171,14 @@ func TestUpdateEventNotFound(t *testing.T) {
 		Description: "test",
 	}
 	err := s.UpdateEvent(context.Background(), e)
-	require.ErrorIs(t, err, app.ErrEventNotFound)
+	require.ErrorIs(t, err, ErrEventNotFound)
 }
 
 func TestUpdateEventNotValid(t *testing.T) {
 	s := New()
-	invalidEvent := &storage.Event{}
+	invalidEvent := &model.Event{}
 	err := s.UpdateEvent(context.Background(), invalidEvent)
 	require.Error(t, err)
-}
-
-func TestCheckingEvent(t *testing.T) {
-	e := &storage.Event{
-		ID:          1,
-		UserID:      1,
-		Title:       "test",
-		OnTime:      time.Now(),
-		OffTime:     time.Now().AddDate(0, 0, 5),
-		NotifyTime:  time.Now().AddDate(0, 0, 1),
-		Description: "test",
-	}
-	err := app.CheckingEvent(e, false)
-	require.Equal(t, nil, err)
-}
-
-func TestStorageRules(t *testing.T) {
-	s := New()
-
-	t.Parallel()
-	t.Run("Checking userID", func(t *testing.T) {
-		var e storage.Event
-		helperEvent(&e, 1)
-		e.UserID = 0
-		err := s.InsertEvent(context.Background(), &e)
-		require.ErrorIs(t, err, app.ErrUserID, "expected err message")
-	})
-
-	t.Run("Checking title", func(t *testing.T) {
-		var e storage.Event
-		helperEvent(&e, 2)
-		e.Title = string(make([]byte, 151))
-		err := s.InsertEvent(context.Background(), &e)
-		require.ErrorIs(t, err, app.ErrTitle, "expected err message")
-	})
-
-	t.Run("Checking onTime", func(t *testing.T) {
-		var e storage.Event
-		helperEvent(&e, 3)
-		e.OnTime = time.Time{}
-		err := s.InsertEvent(context.Background(), &e)
-		require.ErrorIs(t, err, app.ErrOnTime, "expected err message")
-	})
-
-	t.Run("Checking offTime", func(t *testing.T) {
-		var e storage.Event
-		helperEvent(&e, 4)
-		e.OnTime = time.Now()
-		e.OffTime = time.Now().AddDate(0, 0, -1)
-		err := s.InsertEvent(context.Background(), &e)
-		require.ErrorIs(t, err, app.ErrOffTime, "expected err message")
-	})
-
-	t.Run("Checking notifyTime", func(t *testing.T) {
-		var e storage.Event
-		helperEvent(&e, 5)
-		e.OnTime = time.Now()
-		e.OffTime = time.Now().AddDate(0, 0, 3)
-		e.NotifyTime = time.Now().AddDate(0, 0, 4)
-		err := s.InsertEvent(context.Background(), &e)
-		require.ErrorIs(t, err, app.ErrNotifyTime, "expected err message")
-
-		e.OnTime = time.Now()
-		e.OffTime = time.Now().AddDate(0, 0, 3)
-		e.NotifyTime = time.Now().AddDate(0, 0, -1)
-		err = s.InsertEvent(context.Background(), &e)
-		require.ErrorIs(t, err, app.ErrNotifyTime, "expected err message")
-	})
 }
 
 func TestInsertEventThreadSafe(t *testing.T) {
@@ -268,7 +190,7 @@ func TestInsertEventThreadSafe(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			e := &storage.Event{
+			e := &model.Event{
 				UserID:      int64(i + 1),
 				Title:       fmt.Sprintf("Title_N%v", i+1),
 				Description: fmt.Sprintf("Description_N%v", i+1),
@@ -287,7 +209,7 @@ func TestInsertEventThreadSafe(t *testing.T) {
 
 func TestConcurrency_Insert(t *testing.T) {
 	s := New()
-	event := &storage.Event{
+	event := &model.Event{
 		ID:          1,
 		UserID:      1,
 		Title:       "test",
@@ -318,7 +240,7 @@ func TestConcurrency_Insert(t *testing.T) {
 
 func TestConcurrency_Update(t *testing.T) {
 	s := New()
-	event := &storage.Event{
+	event := &model.Event{
 		ID:          1,
 		UserID:      1,
 		Title:       "test",

@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/model"
 	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/server"
-	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/storage"
 )
 
 type ctxKeyID int
@@ -19,17 +19,20 @@ const (
 	KeyLoggerID ctxKeyID = iota
 )
 
-type Conf struct {
-	Host string `toml:"host"`
-	Port string `toml:"port"`
+type Server struct {
+	srv  http.Server
+	app  server.Application
+	log  Logger
+	host string
+	port string
 }
 
-type Server struct {
-	srv    http.Server
-	app    server.Application
-	log    server.Logger
-	conf   Conf
-	cancel context.CancelFunc
+type Logger interface {
+	Fatalf(format string, a ...interface{})
+	Errorf(format string, a ...interface{})
+	Warningf(format string, a ...interface{})
+	Infof(format string, a ...interface{})
+	Debugf(format string, a ...interface{})
 }
 
 type reqByID struct {
@@ -45,8 +48,8 @@ type reqByUserByDate struct {
 	Date   time.Time `json:"date"`
 }
 
-func NewServer(logger server.Logger, app server.Application, conf Conf, cancel context.CancelFunc) *Server {
-	return &Server{log: logger, app: app, conf: conf, cancel: cancel}
+func NewServer(log Logger, app server.Application, host, port string) *Server {
+	return &Server{log: log, app: app, host: host, port: port}
 }
 
 func (s *Server) helperDecode(stream io.ReadCloser, w http.ResponseWriter, data interface{}) error {
@@ -61,14 +64,16 @@ func (s *Server) helperDecode(stream io.ReadCloser, w http.ResponseWriter, data 
 }
 
 func (s *Server) InsertEvent(w http.ResponseWriter, r *http.Request) {
-	var event storage.Event
+	var event model.Event
 	if err := s.helperDecode(r.Body, w, &event); err != nil {
 		return
 	}
-	if err := s.app.InsertEvent(r.Context(), &event); err != nil {
-		s.log.Errorf("Can't insert event:%v\n", err)
+
+	err := s.app.InsertEvent(r.Context(), &event)
+	if err != nil {
+		s.log.Errorf("InsertEvent:%v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(fmt.Sprintf("{\"error\": \"Can't insert event:%v\"}\n", err)))
+		w.Write([]byte(fmt.Sprintf("{\"error\": \"Can't InsertEvent:%v\"}\n", err)))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -76,7 +81,7 @@ func (s *Server) InsertEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) UpdateEvent(w http.ResponseWriter, r *http.Request) {
-	var event storage.Event
+	var event model.Event
 	if err := s.helperDecode(r.Body, w, &event); err != nil {
 		return
 	}
@@ -221,7 +226,7 @@ func (s *Server) GetAllEventsMonth(w http.ResponseWriter, r *http.Request) { //n
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	addr := net.JoinHostPort(s.conf.Host, s.conf.Port)
+	addr := net.JoinHostPort(s.host, s.port)
 	midLogger := NewMiddlewareLogger()
 	mux := http.NewServeMux()
 
@@ -252,7 +257,7 @@ func (s *Server) Start(ctx context.Context) error {
 		},
 	}
 
-	s.log.Infof("http server started on %s:%s\n", s.conf.Host, s.conf.Port)
+	s.log.Infof("http server started on %s:%s\n", s.host, s.port)
 	if err := s.srv.ListenAndServe(); err != nil {
 		return err
 	}

@@ -1,13 +1,17 @@
-package grpc
+package internalgrpc
 
 import (
 	"context"
 	"net"
+	"strings"
+	"time"
 
+	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/model"
 	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/server"
-	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/storage"
 	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/pkg/event_service_v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -18,21 +22,25 @@ const (
 	KeyMethodID ctxKeyID = iota
 )
 
-type Conf struct {
-	Port string `toml:"port"`
-	Host string `toml:"host"`
+type Logger interface {
+	Fatalf(format string, a ...interface{})
+	Errorf(format string, a ...interface{})
+	Warningf(format string, a ...interface{})
+	Infof(format string, a ...interface{})
+	Debugf(format string, a ...interface{})
 }
 
 type Server struct {
 	event_service_v1.UnimplementedEventServiceV1Server
 
-	srv  *grpc.Server
-	app  server.Application
-	log  server.Logger
-	conf Conf
+	basesrv *grpc.Server
+	app     server.Application
+	log     Logger
+	host    string
+	port    string
 }
 
-func (Server) APIEventFromEvent(event *storage.Event) *event_service_v1.Event {
+func (Server) APIEventFromEvent(event *model.Event) *event_service_v1.Event {
 	return &event_service_v1.Event{
 		ID:          &event.ID,
 		UserID:      &event.UserID,
@@ -44,8 +52,8 @@ func (Server) APIEventFromEvent(event *storage.Event) *event_service_v1.Event {
 	}
 }
 
-func (Server) EventFromAPIEvent(apiEvent *event_service_v1.Event) *storage.Event {
-	event := storage.Event{}
+func (Server) EventFromAPIEvent(apiEvent *event_service_v1.Event) *model.Event {
+	event := model.Event{}
 
 	event.ID = *apiEvent.ID
 	event.UserID = *apiEvent.UserID
@@ -171,26 +179,61 @@ func (s *Server) GetAllEventsMonth(
 	return &rep, nil
 }
 
-func NewServer(log server.Logger, app server.Application, conf Conf, srv *grpc.Server) *Server {
-	return &Server{
-		app:  app,
-		conf: conf,
-		log:  log,
-		srv:  srv,
+func NewServer(log Logger, app server.Application, host, port string) (*Server, *grpc.Server) {
+	unarayLoggerEnricherIntercepter := func(ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (interface{}, error) {
+		timeStart := time.Now()
+		var b strings.Builder
+		ip, _ := peer.FromContext(ctx)
+		md, ok := metadata.FromIncomingContext(ctx)
+		userAgent := "unknown"
+
+		if ok {
+			userAgent = md["user-agent"][0]
+		}
+
+		b.WriteString(ip.Addr.String())
+		b.WriteString(" ")
+		b.WriteString(timeStart.Format("[02/Jan/2006:15:04:05 -0700]"))
+		b.WriteString(" ")
+		b.WriteString(info.FullMethod)
+		b.WriteString(" ")
+		b.WriteString(time.Since(timeStart).String())
+		b.WriteString(" ")
+		b.WriteString(userAgent)
+		b.WriteString("\n")
+		log.Infof(b.String())
+		return handler(ctx, req)
 	}
+
+	basesrv := grpc.NewServer(grpc.UnaryInterceptor(unarayLoggerEnricherIntercepter))
+
+	serverGrpc := &Server{
+		log:                               log,
+		app:                               app,
+		basesrv:                           basesrv,
+		host:                              host,
+		port:                              port,
+		UnimplementedEventServiceV1Server: event_service_v1.UnimplementedEventServiceV1Server{},
+	}
+
+	event_service_v1.RegisterEventServiceV1Server(serverGrpc.basesrv, serverGrpc)
+
+	return serverGrpc, basesrv
 }
 
 func (s *Server) Start(context.Context) error {
-	addr := net.JoinHostPort(s.conf.Host, s.conf.Port)
+	addr := net.JoinHostPort(s.host, s.port)
 	dial, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
 
-	event_service_v1.RegisterEventServiceV1Server(s.srv, s)
-
 	s.log.Infof("grpc server started on %v\n", addr)
-	if err := s.srv.Serve(dial); err != nil {
+	if err := s.basesrv.Serve(dial); err != nil {
 		return err
 	}
 
@@ -198,7 +241,7 @@ func (s *Server) Start(context.Context) error {
 }
 
 func (s *Server) Stop(context.Context) error {
-	s.srv.GracefulStop()
+	s.basesrv.GracefulStop()
 	s.log.Infof("grpc server shutdown\n")
 	return nil
 }
