@@ -1,0 +1,10 @@
+#sender
+url_rmq = "amqp://root:secretkey@localhost:5672/"
+
+[logger]
+level = "DEBUG"
+
+[storage]
+#db = "in_memory"
+db = "sql"
+dsn = "postgresql://root:secretkey@localhost:5432/calendar?sslmode=disable"

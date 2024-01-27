@@ -18,25 +18,31 @@ const (
 
 var ErrLogLevel = errors.New("unrecognized log_level")
 
+type Conf struct {
+	Level string `toml:"level"`
+}
+
 type Logger struct {
 	level  int
 	writer io.Writer
 	mu     *sync.Mutex
 }
 
-func New(level string, writer io.Writer) (*Logger, error) {
+func NewLogger(level string, writer io.Writer) *Logger {
 	switch strings.ToUpper(level) {
 	case "ERROR":
-		return &Logger{level: LevelError, mu: &sync.Mutex{}, writer: writer}, nil
+		return &Logger{level: LevelError, mu: &sync.Mutex{}, writer: writer}
 	case "WARN":
-		return &Logger{level: LevelWarn, mu: &sync.Mutex{}, writer: writer}, nil
+		return &Logger{level: LevelWarn, mu: &sync.Mutex{}, writer: writer}
 	case "INFO":
-		return &Logger{level: LevelInfo, mu: &sync.Mutex{}, writer: writer}, nil
+		return &Logger{level: LevelInfo, mu: &sync.Mutex{}, writer: writer}
 	case "DEBUG":
-		return &Logger{level: LevelDebug, mu: &sync.Mutex{}, writer: writer}, nil
+		return &Logger{level: LevelDebug, mu: &sync.Mutex{}, writer: writer}
 	default:
-		return nil, ErrLogLevel
+		fmt.Fprintln(os.Stderr, "unrecognized log_level")
+		os.Exit(1)
 	}
+	return nil
 }
 
 func (l *Logger) printf(format string, a ...interface{}) {

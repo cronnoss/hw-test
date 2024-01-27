@@ -12,7 +12,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "./configs/calendar_config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "./configs/sender_config.toml", "Path to configuration file")
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
@@ -22,12 +22,12 @@ func init() {
 }
 
 type Config struct {
-	app.CalendarConf
+	app.SenderConf
 }
 
 func NewConfig() Config {
 	var config Config
-	if err := config.LoadFileTOML(configFile); err != nil {
+	if err := config.LoadConfigFile(configFile); err != nil {
 		fmt.Fprintf(os.Stderr, "Can't load config file:%v error: %v\n", configFile, err)
 		os.Exit(1)
 	}
@@ -35,7 +35,7 @@ func NewConfig() Config {
 	return config
 }
 
-func (c *Config) LoadFileTOML(filename string) error {
+func (c *Config) LoadConfigFile(filename string) error {
 	filedata, err := os.ReadFile(filename)
 	if err != nil {
 		return err

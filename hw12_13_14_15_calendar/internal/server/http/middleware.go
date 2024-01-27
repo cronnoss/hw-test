@@ -3,8 +3,6 @@ package internalhttp
 import (
 	"net/http"
 	"time"
-
-	"github.com/cronnoss/hw-test/hw12_13_14_15_calendar/internal/server"
 )
 
 type statusWriter struct {
@@ -27,7 +25,7 @@ func (a *MiddlewareLogger) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sw := &statusWriter{ResponseWriter: w}
 
-		l := r.Context().Value(KeyLoggerID).(server.Logger)
+		l := r.Context().Value(KeyLoggerID).(Logger)
 		start := time.Now()
 
 		next.ServeHTTP(sw, r)
