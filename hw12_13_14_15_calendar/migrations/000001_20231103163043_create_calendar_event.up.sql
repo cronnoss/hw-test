@@ -15,11 +15,3 @@ CREATE INDEX IF NOT EXISTS events_userid_idx ON events (userid);
 CREATE INDEX IF NOT EXISTS events_ontime_idx ON events (ontime);
 CREATE INDEX IF NOT EXISTS events_notify_idx ON events (ontime, notified);
 -- +goose StatementEnd
-
--- +goose Down
--- +goose StatementBegin
-DROP INDEX IF EXISTS events_userid_idx;
-DROP INDEX IF EXISTS events_ontime_idx;
-DROP INDEX IF EXISTS events_notify_idx;
-DROP TABLE IF EXISTS events;
--- +goose StatementEnd
