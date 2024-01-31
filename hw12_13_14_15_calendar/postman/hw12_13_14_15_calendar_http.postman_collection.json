@@ -1,0 +1,188 @@
+{
+	"info": {
+		"_postman_id": "e60b38ad-d6e0-4dd3-896a-1eea71731437",
+		"name": "hw12_13_14_15_calendar_http",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "4033210",
+		"_collection_link": "https://restless-astronaut-380866.postman.co/workspace/cronnoss_workspace~cc27aea7-7e1e-48b9-804d-842fbcdf129b/collection/4033210-e60b38ad-d6e0-4dd3-896a-1eea71731437?action=share&source=collection_link&creator=4033210"
+	},
+	"item": [
+		{
+			"name": "http://localhost:8090/InsertEvent",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"id\": 123,\n    \"userid\": 123,\n\t\"title\": \"title2\",\n\t\"description\": \"testing my app1\",\n\t\"ontime\": \"2021-12-07T00:00:00Z\",\n\t\"offtime\": \"2021-12-09T00:00:00Z\",\n\t\"notifytime\": \"2021-12-08T00:00:00Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/InsertEvent",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"InsertEvent"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8090/GetEventByID",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"id\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/GetEventByID",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"GetEventByID"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8090/UpdateEvent",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"id\": 1,\n\t\"userid\": 123,\n\t\"title\": \"newgra1\",\n\t\"description\": \"test\",\n\t\"ontime\": \"2021-01-01T00:00:00Z\",\n\t\"offtime\": \"2021-01-07T00:00:00Z\",\n\t\"notifytime\": \"2021-01-02T00:00:00Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/UpdateEvent",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"UpdateEvent"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8090/DeleteEvent",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"id\": 2\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/DeleteEvent",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"DeleteEvent"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8090/GetAllEvents",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"userid\": 1234\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/GetAllEvents",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"GetAllEvents"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8090/GetAllEventsDay",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"userid\": 1234,\n    \"date\": \"2024-01-23T00:00:00Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8090/GetAllEventsDay",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8090",
+					"path": [
+						"GetAllEventsDay"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

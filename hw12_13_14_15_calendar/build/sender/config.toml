@@ -1,0 +1,9 @@
+#sender
+url_rmq = "amqp://rabbitmq:rabbitmq@rabbitmq:5672/"
+
+[logger]
+level = "DEBUG"
+
+[storage]
+db = "sql"
+dsn = "postgresql://postgres:postgres@postgres:5432/calendar?sslmode=disable"
