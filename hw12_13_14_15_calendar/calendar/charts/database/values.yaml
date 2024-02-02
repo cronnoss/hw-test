@@ -1,0 +1,14 @@
+app:
+  name: postgres
+  replicas: 1
+
+image:
+  repo: postgres
+  tag: latest
+
+containerPort: 5432
+
+envs:
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: calendar
