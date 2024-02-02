@@ -36,6 +36,10 @@ help:
 	@echo
 	@echo ${Green}"make test"${Color_Off}" to run unit tests"
 	@echo ${Green}"make integration-test"${Color_Off}" to run integration tests"
+	@echo
+	@echo ${Red}"You can use helm:"
+	@echo ${Green}"make helm-up"${Color_Off}" to run helm"
+	@echo ${Green}"make helm-down"${Color_Off}" to stop helm"
 
 build: build-calendar build-calendar-scheduler build-calendar-sender
 
@@ -147,6 +151,12 @@ integration-test:
 	docker-compose -f ./deployments/docker-compose.yaml down ;\
 	docker-compose -f ./deployments/docker-compose.yaml down -v ;\
 	exit $$test_status_code ;
+
+helm-up:
+	helm install calendar calendar
+
+helm-down:
+	helm uninstall calendar
 
 .PHONY: build build-calendar build-calendar-scheduler build-calendar-sender
 .PHONY: run-calendar run-calendar-scheduler run-calendar-sender

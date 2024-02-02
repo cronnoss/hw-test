@@ -230,6 +230,18 @@ func (s *Server) Start(ctx context.Context) error {
 	midLogger := NewMiddlewareLogger()
 	mux := http.NewServeMux()
 
+	mux.Handle("/healthz", midLogger.setCommonHeadersMiddleware(
+		midLogger.loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK healthz\n"))
+		}))))
+
+	mux.Handle("/readiness", midLogger.setCommonHeadersMiddleware(
+		midLogger.loggingMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK readiness\n"))
+		}))))
+
 	mux.Handle("/InsertEvent", midLogger.setCommonHeadersMiddleware(
 		midLogger.loggingMiddleware(http.HandlerFunc(s.InsertEvent))))
 	mux.Handle("/UpdateEvent", midLogger.setCommonHeadersMiddleware(
