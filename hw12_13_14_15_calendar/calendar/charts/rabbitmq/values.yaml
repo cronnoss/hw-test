@@ -1,0 +1,10 @@
+app:
+  name: rabbitmq
+  replicas: 1
+
+image:
+  repo: rabbitmq
+  tag: 3-management
+
+containerPort: 5672
+containerPort2: 15672
